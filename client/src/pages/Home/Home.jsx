@@ -28,7 +28,7 @@ const Home = () => {
                           <Card2 products={object.products} error={productsError} isLoading={productsIsLoading} />
                           <div 
                                 onClick={() => getMoreProducts(object.category, index)}
-                                className={`px-6 py-2 bg-slate-700 text-white text-base font-medium rounded-lg transition-transform transform hover:scale-105 hover:bg-slate-900 items-center flex items-center ${moreProductsIsLoading ? 'cursor-not-allowed bg-slate-700' : moreProductsError ? 'bg-red-800 cursor-pointer' : 'bg-slate-700 cursor-pointer'}`}>
+                                className={`px-6 py-2 bg-slate-700 text-white text-base font-medium rounded-lg transition-transform transform hover:scale-105 hover:bg-slate-900 items-center flex ${moreProductsIsLoading ? 'cursor-not-allowed bg-slate-700' : moreProductsError ? 'bg-red-800 cursor-pointer' : 'bg-slate-700 cursor-pointer'}`}>
                                     <span className="text-sm mt-2">{moreProductsIsLoading ? "Loading" : "Load More"}</span>
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={5}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />

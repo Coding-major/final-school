@@ -4,7 +4,8 @@ const Review = require("../models/review")
 const AdditionalImage = require("../models/additionalImages")
 const cloudinary = require("cloudinary").v2
 const { StatusCodes} = require("http-status-codes")
-const path = require("path")
+const path = require("path");
+const fs = require("fs");
 const {
     customError,
     notFound,
@@ -12,8 +13,8 @@ const {
     badRequest,
     forbidden
 } = require("../errors/indexErrors")
-const checkPermissions = require("../utils/checkpermisions")
-const { count } = require("console")
+
+
 
 const createProduct = async (req, res) => {
     const session = await mongoose.startSession()
@@ -23,6 +24,8 @@ const createProduct = async (req, res) => {
     var { name, price, description, category, company, inventory } = req.body;
     const mainImage = req.files?.mainImage;
     const otherImages = req.files?.additionalImages;
+    console.log(otherImages);
+    
     
     if (!name) {
         throw new badRequest("please specify name")
@@ -60,54 +63,71 @@ const createProduct = async (req, res) => {
         }
     }
 
-    // if (!mainImage) {
-    //     throw new badRequest("please upload an image for the product")
-    // }
+    if (!mainImage) {
+        throw new badRequest("please upload an image for the product")
+    }
 
-    if (name) {
+    
+    if (otherImages) {
         console.log("NNNNNNNNNN");
+    
+        // Check if images exist in request
+        if (!req.files || !req.files.mainImage || !req.files.additionalImages) {
+            throw new badRequest("Main image and additional images are required");
+        }
+    
+    
+        // Ensure otherImages is an array
+        const otherImagesArray = Array.isArray(otherImages) ? otherImages : [otherImages];
+        console.log(otherImagesArray);
         
-        //check if image gotten from front-end is array, if not make it array
-        const otherImagesArray = Array.isArray(otherImages) ? otherImages : [otherImages]
+    
+        if (otherImages.length !== 5) {
+            throw new badRequest("The additional image should be five(5)");
+        }
 
-        // if (otherImagesArray.length !== 5 ) {
-        //     throw new badRequest("The additional image should be five(5)")
+    
+        // Validate and save main image
+        if (!mainImage.mimetype.startsWith("image")) {
+            throw new badRequest("Please upload a valid image");
+        }
+        
+        // const maxSize = 1024 * 1024; 
+        // if (mainImage.size > maxSize) {
+        //     throw new badRequest("Please upload an image less than 1MB");
         // }
-
-        //map through each picture and store it on cloudinary using promise
-        //now we get the promise
-        // session.startTransaction();
-        
-        // const result = await cloudinary.uploader.upload(mainImage.tempFilePath, {
-        //     folder: "my-uploads",
-        //     use_filename: true
-        // })
-        // if (!result) {
-        //     console.log("no no no");
-            
-        // }
-        var resultUrls = ["ndh", "pppp", "oooo"]
-
-        console.log("ooooooooooooooo");
-        // console.log(resultUrl);
-        
-        
-
-        // const imagesPromises = otherImagesArray.map((image, index) => {
-        //     return cloudinary.uploader.upload(image.tempFilePath, {
-        //         folder: "my-uploads",
-        //         use_filename: true
-        //     })
-        // })
-        // //impementing the promise
-        // const promiseResult = await Promise.all(imagesPromises)
-
-
-        // //storing the url of each cloudinary result to an array
-        // var resultUrls = promiseResult.map((result, index) => {
-        //     return result.secure_url
-        // })
-        
+    
+        // Save main image locally
+        console.log("wwwwwwwwwwwwwwwwwwwwwww");
+        const mainImageName = `${Date.now()}-${mainImage.name}`;
+        const mainImagePath = path.join(__dirname, "../public/uploads", mainImageName);
+        await mainImage.mv(mainImagePath);
+        const mainImageUrl = `/uploads/${mainImageName}`;
+    
+        console.log("Main image saveddddd:", mainImageUrl);
+    
+        // Validate and save other images locally
+        const resultUrls = [];
+    
+        for (let i = 0; i < otherImagesArray.length; i++) {
+            const image = otherImagesArray[i];
+    
+            if (!image.mimetype.startsWith("image")) {
+                throw new badRequest(`Additional image ${i + 1} is not a valid image`);
+            }
+            // if (image.size > maxSize) {
+            //     throw new badRequest(`Additional image ${i + 1} exceeds 1MB size limit`);
+            // }
+    
+            const imageName = `${Date.now()}-${image.name}`;
+            const imagePath = path.join(__dirname, "../public/uploads", imageName);
+            await image.mv(imagePath);
+            resultUrls.push(`/uploads/${imageName}`);
+        }
+    
+        console.log("All additional images savedttttttttttttt:", resultUrls);
+    
+        // Save product details to the database
         const product = await Product.create({
             name,
             price,
@@ -115,10 +135,12 @@ const createProduct = async (req, res) => {
             category,
             company,
             inventory,
-            mainImage,
-            additionalImages: resultUrls
-        })
-
+            mainImage: mainImageUrl,
+            additionalImages: resultUrls,
+            user: req.user.userID
+        });
+    
+        // Send response
         const filteredProduct = {
             name: product.name,
             price: product.price,
@@ -127,32 +149,53 @@ const createProduct = async (req, res) => {
             category: product.category,
             inventory: product.inventory,
             mainImage: product.mainImage,
-            additionalImages: product.additionalImages
-        }
+            additionalImages: product.additionalImages,
+        };
+
+        console.log(filteredProduct);
         
-        res.status(StatusCodes.CREATED).json({msg: filteredProduct})
-        
+    
+        res.status(StatusCodes.CREATED).json({ msg: filteredProduct });
     }
+    
 
 
     
-    // const result = await cloudinary.uploader.upload(mainImage.tempFilePath, {
-    //     folder: "my-uploads",
-    //     use_filename: true
-    // })
+    // Validate and save main image
+    if (!mainImage.mimetype.startsWith("image")) {
+        throw new badRequest("Please upload a valid image");
+    }
+    
+    const mainImageName = `${Date.now()}-${mainImage.name}`;
+    const mainImagePath = path.join(__dirname, "../public/uploads", mainImageName);
+    await mainImage.mv(mainImagePath);
+    const mainImageUrl = `/uploads/${mainImageName}`;
 
-    // const resultUrl = result.secure_url
+    console.log("Main image saveddddd:", mainImageUrl);
 
-    // const product = await Product.create({
-    //     name,
-    //     price,
-    //     description,
-    //     category,
-    //     company,
-    //     freeShipping,
-    //     inventory,
-    //     image: resultUrl
-    // })
+    const product = await Product.create({
+        name,
+        price,
+        description,
+        category,
+        company,
+        inventory,
+        mainImage: mainImageUrl,
+        user: req.user.userID
+    });
+
+    // Send response
+    const filteredProduct = {
+        name: product.name,
+        price: product.price,
+        description: product.description,
+        company: product.company,
+        category: product.category,
+        inventory: product.inventory,
+        mainImage: product.mainImage,
+    };
+
+    res.status(StatusCodes.CREATED).json({ msg: filteredProduct });
 
 }
 
@@ -191,7 +234,7 @@ const getAllProducts = async (req, res) => {
         const productPromises = categories.map((category) => {
             return Product.find({category})
                 .limit(limitValue)
-                .select("name price description category")
+                .select("name price description category mainImage")
                 .exec();
             
         });
@@ -208,11 +251,12 @@ const getAllProducts = async (req, res) => {
           products: productsByCategory[index]
         }));
     
-        
     
         // const products = await Product.find({})
         // if (!products) {
         //     throw new notFound("no products to display")
+        console.log(response);
+        
         // }
         return res.status(StatusCodes.OK).json({msg: response})
     }
@@ -223,7 +267,7 @@ const getAllProducts = async (req, res) => {
         const products = await Product.find({category})
             .skip(page)
             .limit(limitValue)
-            .select("name price description category")
+            .select("name price description category mainImage")
             .exec();
 
         // const nextPage = page + 1
@@ -234,6 +278,7 @@ const getAllProducts = async (req, res) => {
         // console.log(products);
         console.log(products.length);
         
+        console.log(resultProducts);
         
         return res.status(StatusCodes.OK).json({msg: resultProducts})
     }
@@ -245,7 +290,9 @@ const getAllProducts = async (req, res) => {
 
 const getMyProducts = async (req, res) => {
     const theUser = req.user.userID
-    const products = await Product.find({user: theUser}).populate("reviews")
+    
+    // const products = await Product.find({user: theUser}).populate("reviews")
+    const products = await Product.find({user: theUser})
     if (!products) {
         throw new notFound("no products to display")
     }
@@ -256,7 +303,10 @@ const getMyProducts = async (req, res) => {
 
 
 const getSingleProduct = async (req, res) => {
-    const product = await Product.findOne({_id: req.params.id}).populate("reviews")
+    const {id} = req.params
+    // console.log(req.params.id);
+    
+    const product = await Product.findOne({_id: new mongoose.Types.ObjectId(id.toString())}).populate("reviews")
     if (!product) {
         throw new notFound("No product to display")
     }
@@ -281,7 +331,18 @@ const updateProduct = async (req, res) => {
 
 const deleteProduct = async (req, res, next) => {
     const theUser = req.user.userID
-    const product = await Product.findOneAndDelete({_id: req.params.id, user: req.user.userID})
+    var product = ""
+    console.log(req.params);
+    
+
+    
+    if (req.user.role === "admin") {
+        product = await Product.findOneAndDelete({_id: req.params.id})
+    }
+
+    if (req.user.role === "business") {
+        product = await Product.findOneAndDelete({_id: req.params.id, user: req.user.userID})
+    }
 
     if(!product) {
         throw new notFound("No product with the id to delete")

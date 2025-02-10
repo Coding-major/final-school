@@ -1,9 +1,10 @@
 import { useContext } from "react";
-import CreateProduct from "../../components/product/createProduct";
+import CreateProduct from "../../components/product/CreateProduct";
 import { ProductContext } from "../../context/ProductContext";
 
 import SingleProduct from "../../components/product/SingleProduct";
-const {createdProduct } = useContext(ProductContext)
+
+
 const ProductForm = () => {
     const { createdProduct } = useContext(ProductContext)
     return (

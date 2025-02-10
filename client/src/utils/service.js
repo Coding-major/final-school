@@ -30,6 +30,7 @@ export const postRequestFormData = async(url, body) => {
     const response = await fetch(url, {
         method: "POST",
         body: body,
+        credentials: "include"
     })
 
     const data = await response.json()

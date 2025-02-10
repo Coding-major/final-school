@@ -1,6 +1,6 @@
 import { createContext, useCallback, useEffect, useState, useContext } from "react";
 import { FormContext } from "./FormContext";
-import { baseUrl, getRequest, postRequestFormData } from "../utils/service";
+import { baseUrl, getRequest, postRequestFormData, deleteRequest } from "../utils/service";
 
 export const ProductContext = createContext()
 
@@ -33,12 +33,19 @@ export const ProductContextProvider = ({ children }) => {
     const [productId, setProductId] = useState(null);
 
     //my products
-    const [myProducts, setMyProducts] = useState()
+    const [myProducts, setMyProducts] = useState([])
     const [myProductsIsLoading, setMyProductsIsLoading] = useState(false)
     const [myProductsError, setMyProductsError] = useState(null);
 
    
     const [statusCode, setStatusCode] = useState(null)
+
+    //delete product
+    const [deleteIsLoading, setDeleteIsLoading] = useState(false)
+    const [deleteError, setDeleteError] = useState(null)
+
+    const [change, setChange] = useState(null)
+    var theChange = change
 
 
     const fetchFilteredProducts = async (updatedFilters) => {
@@ -64,6 +71,7 @@ export const ProductContextProvider = ({ children }) => {
         }
         
         setFilteredProducts(response)
+        setChange("filter")
         
       };
 
@@ -98,6 +106,7 @@ export const ProductContextProvider = ({ children }) => {
             return setProductsError(response.message)
         }
         setProducts(response)
+        setChange("home")
     }
 
     const getMoreProducts = async (category, index) => {
@@ -204,7 +213,7 @@ export const ProductContextProvider = ({ children }) => {
         setMyProductsIsLoading(true)
         setMyProductsError(null)
 
-        const response = await getRequest(`${baseUrl}/users/myproducts`);
+        const response = await getRequest(`${baseUrl}/products/myproducts`);
         setMyProductsIsLoading(false)
 
         if (response.error) {
@@ -213,6 +222,24 @@ export const ProductContextProvider = ({ children }) => {
 
         setMyProducts(response)
     }, [])
+
+    // const deleteProduct = useCallback(async(id) => {
+    //     console.log("zzzzzzzzzzzz:  ",theChange);
+        
+    //     setDeleteIsLoading(true)
+    //     setDeleteError(null)
+
+
+    //     const response = await deleteRequest(`${baseUrl}/products${id}`)
+
+    //     setMyProductsIsLoading(false)
+
+    //     if (response.error) {
+    //         return setDeleteError(response.message)
+    //     }
+
+    //     setMyProducts
+    // }, [])
 
     return <ProductContext.Provider value={{
         filteredProducts,
@@ -237,7 +264,11 @@ export const ProductContextProvider = ({ children }) => {
         getProductDetail,
         isModalOpen,
         setIsModalOpen,
-        handleFilterInput
+        handleFilterInput,
+        getMyProducts,
+        myProducts,
+        setMyProductsError,
+        setMyProductsIsLoading, 
     }}>
         {children}
     </ProductContext.Provider>

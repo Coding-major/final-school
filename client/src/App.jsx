@@ -7,7 +7,7 @@ import Loader from './common/Loader';
 import PageTitle from './components/PageTitle';
 import SignIn from './pages/Authentication/SignIn';
 import SignUp from './pages/Authentication/SignUp';
-import Calendar from './pages/Calendar';
+import MyProducts from './pages/MyProducts';
 // import Chart from './pages/Chart';
 // import ECommerce from './pages/Dashboard/ECommerce';
 import FormElements from './pages/Form/FormElements';
@@ -19,6 +19,7 @@ import Cart from './pages/Cart';
 import Alerts from './pages/UiElements/Alerts';
 import Buttons from './pages/UiElements/Buttons';
 import DefaultLayout from './layout/DefaultLayout';
+import ProductForm from './pages/product/ProductForm';
 
 function App() {
   const { user } = useContext(AuthContext);
@@ -49,11 +50,20 @@ function App() {
           }
         />
         <Route
-          path="/calendar"
+          path="/my-products"
           element={
             <>
-              <PageTitle title="Calendar | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-              <Calendar />
+              <PageTitle title="My Products | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <MyProducts/>
+            </>
+          }
+        />
+        <Route
+          path="/create-product"
+          element={
+            <>
+              <PageTitle title="create product | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <ProductForm />
             </>
           }
         />
